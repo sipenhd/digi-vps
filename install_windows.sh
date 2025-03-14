@@ -108,14 +108,19 @@ echo "ISO AutoUnattend berhasil dibuat."
 
 # Menjalankan QEMU untuk instalasi Windows
 echo "Memulai instalasi Windows di QEMU secara otomatis..."
-qemu-system-x86_64 -enable-kvm -m 4096 -cpu host -smp 2 \
-    -drive file="$IMG_FILE",format=raw \
-    -cdrom "$ISO_FILE" -boot d \
+qemu-system-x86_64 \
+    -enable-kvm \
+    -m 4096 \
+    -cpu host \
+    -smp 2 \
+    -drive file="$IMG_FILE",format=raw,if=virtio \
+    -cdrom "$ISO_FILE" \
     -drive file="$VIRTIO_ISO",media=cdrom \
     -drive file="$UNATTENDED_ISO",media=cdrom \
+    -boot once=d \
     -vga qxl \
     -display vnc=:1 \
-    -netdev user,id=network0 -device virtio-net,netdev=network0 \
+    -netdev user,id=net0,hostfwd=tcp::3389-:3389 -device e1000,netdev=net0 \
     -device usb-tablet
 
 echo "Windows sedang diinstal secara otomatis. Gunakan VNC untuk mengaksesnya (port :1)."
@@ -126,12 +131,15 @@ sleep 600
 
 # Menjalankan kembali Windows dari disk
 echo "Menjalankan kembali Windows setelah instalasi..."
-qemu-system-x86_64 -enable-kvm -m 4096 -cpu host -smp 2 \
-    -drive file="$IMG_FILE",format=raw \
+qemu-system-x86_64 \
+    -enable-kvm \
+    -m 4096 \
+    -cpu host \
+    -smp 2 \
+    -drive file="$IMG_FILE",format=raw,if=virtio \
     -vga qxl \
     -display vnc=:1 \
-    -netdev user,id=network0 -device virtio-net,netdev=network0 \
-    -device usb-tablet \
-    -redir tcp:3389::3389
+    -netdev user,id=net0,hostfwd=tcp::3389-:3389 -device e1000,netdev=net0 \
+    -device usb-tablet
 
 echo "Windows sudah berjalan dengan RDP aktif. Gunakan Remote Desktop untuk mengaksesnya dengan IP_VPS:3389."
